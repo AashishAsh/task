@@ -1,0 +1,39 @@
+---
+- name: install dependencies
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - unzip
+    - libselinux-python
+    - openssl
+    - nginx
+#    - runit
+#    - @Development tools
+- name: copying the file 
+  copy:
+    src: ../config/nginx.conf
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: 0644 
+- name: starting the service
+  service: name=nginx state=started enabled=yes
+- name: creating directory
+  file:
+    path: /etc/nginx/ssl
+    state: directory
+    owner: root
+    group: root
+    mode: "u=rwx,g=rwx,o=rx"
+- name: copying the certs
+  copy: src="{{ item }}" dest=/etc/nginx/ssl/
+  with_items:
+    - files/self-signed.crt
+    - files/self-signed.key
+    - application.zip 
+- name: copy the application
+  unarchive:
+    src: /etc/nginx/ssl/application.zip 
+    dest: /opt/
+    remote_src: True
